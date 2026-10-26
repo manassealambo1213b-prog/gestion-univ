@@ -22,4 +22,5 @@ RUN php artisan config:clear || true
 
 EXPOSE 80
 
-CMD ["apache2-foreground"]
+RUN echo '#!/bin/bash\nphp artisan migrate --force\nphp artisan config:clear\nphp artisan cache:clear\napache2-foreground' > /start.sh && chmod +x /start.sh
+CMD ["/start.sh"]
