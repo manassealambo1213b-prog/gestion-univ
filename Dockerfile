@@ -9,8 +9,9 @@ COPY . .
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 RUN mkdir -p storage/logs bootstrap/cache storage/framework/sessions storage/framework/views storage/framework/cache
+RUN chmod -R 777 storage bootstrap/cache
 RUN php artisan config:clear || true
 EXPOSE 80
-RUN echo '#!/bin/bash\nphp artisan migrate --force\nphp artisan config:clear\nphp artisan cache:clear\napache2-foreground' > /start.sh
+RUN echo '#!/bin/bash\nchmod -R 777 storage bootstrap/cache\nphp artisan migrate --force\nphp artisan config:clear\nphp artisan view:clear\nphp artisan cache:clear\napache2-foreground' > /start.sh
 RUN chmod +x /start.sh
 CMD ["/start.sh"]
