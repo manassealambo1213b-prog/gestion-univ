@@ -10,39 +10,43 @@ class EtudiantController extends Controller
 {
     public function index()
     {
-        $etudiants = Etudiant::with('filiere')->get();
+        $etudiants = Etudiant::with('filiere')->latest()->get();
         return view('etudiants.index', compact('etudiants'));
     }
 
-    public function create(){
+    public function create()
+    {
         $filieres = Filiere::all();
         return view('etudiants.create', compact('filieres'));
     }
 
-    public function store(Request $request){
+    public function store(Request $request)
+    {
         $request->validate([
-            'nom'=>'required',
-            'matricule'=>'required|unique:etudiants,matricule',
-            'filiere_id'=>'required',
+            'nom' => 'required',
+            'prenom' => 'required',
+            'matricule' => 'required|unique:etudiants',
+            'email' => 'nullable|email',
+            'filiere_id' => 'required',
         ]);
 
-        // CORRECTION DEFINITIVE DE L'EMAIL
-        $email = $request->filled('email') ? $request->email : strtolower($request->prenom ?? 'etudiant').$request->matricule.'@univ.cd';
+        $email = $request->email ?? strtolower($request->prenom.'.'.$request->nom.'@gestion-univ.cd');
 
         Etudiant::create([
-            'nom'=>$request->nom,
-            'prenom'=>$request->prenom,
-            'matricule'=>$request->matricule,
-            'email'=>$email,
-            'filiere_id'=>$request->filiere_id,
-            'statut'=>'non_valide',
+            'nom' => $request->nom,
+            'prenom' => $request->prenom,
+            'matricule' => $request->matricule,
+            'email' => $email,
+            'filiere_id' => $request->filiere_id,
+            'statut' => 'non_valide',
         ]);
+
         return redirect('/etudiants')->with('success','Étudiant ajouté !');
     }
 
     public function show(Etudiant $etudiant)
     {
-        $etudiant->load('filiere', 'paiements');
+        $etudiant->load('filiere','paiements');
         return view('etudiants.show', compact('etudiant'));
     }
 
@@ -50,5 +54,19 @@ class EtudiantController extends Controller
     {
         $etudiant->update(['statut' => 'valide']);
         return back()->with('success', 'Étudiant validé !');
+    }
+
+    // --- LES 2 FONCTIONS QUI MANQUAIENT ET QUI FAISAIENT PLANTER ---
+
+    public function fichePdf(Etudiant $etudiant)
+    {
+        $etudiant->load('filiere','paiements');
+        return view('etudiants.fiche', compact('etudiant'));
+    }
+
+    public function destroy(Etudiant $etudiant)
+    {
+        $etudiant->delete();
+        return back()->with('success','Étudiant supprimé');
     }
 }
